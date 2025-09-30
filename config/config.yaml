@@ -1,0 +1,4 @@
+files:
+  raw_path: data/raw
+  wip_path: data/wip
+  done_path: data/done

@@ -1,0 +1,6 @@
+# Python
+.venv/
+.DS_Store
+
+# Editors
+.idea/
