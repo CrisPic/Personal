@@ -40,19 +40,12 @@ def _read_processed_csv(path: Path) -> pd.DataFrame:
         return pd.read_csv(path, encoding="latin-1")
 
 def _df_to_rows(df: pd.DataFrame, cols: List[str]) -> list[tuple]:
-    """
-    Convert a DataFrame to a list of tuples with None for missing values.
-    Keeps column order as provided in `cols`.
-    """
     sub = df.loc[:, cols].copy()
     # Make missing values become SQL NULLs
     sub = sub.astype(object).where(pd.notna(sub), None)
     return [tuple(row) for row in sub.to_numpy()]
 
 def _infer_from_processed_name(path: Path) -> Tuple[str, int]:
-    """
-    Extract (table, year) from processed filename pattern: <table>_<year>_<timestamp>.csv
-    """
     m = PROCESSED_RE.match(path.name)
     if not m:
         raise ValueError(
@@ -61,10 +54,6 @@ def _infer_from_processed_name(path: Path) -> Tuple[str, int]:
     return m.group("table"), int(m.group("year"))
 
 def _latest_processed_per_table_for_year(year: int) -> dict[str, Path]:
-    """
-    Pick the lexicographically latest processed file for each table in a given year.
-    Assumes filenames carry a sortable timestamp suffix (YYYYMMDD_HHMMSS).
-    """
     latest: dict[str, Path] = {}
     for p in sorted(Path(processed_path).glob(f"*_{year}_*.csv")):
         m = PROCESSED_RE.match(p.name)
@@ -76,12 +65,6 @@ def _latest_processed_per_table_for_year(year: int) -> dict[str, Path]:
     return latest
 
 def _insert_df(conn: psycopg.Connection, table: str, df: pd.DataFrame) -> int:
-    """
-    Generic loader: INSERT INTO <table> (<df.columns...>) VALUES (%s, %s, ...)
-    ON CONFLICT DO NOTHING;
-    Assumes DB column names match df.columns exactly.
-    Returns number of rows attempted (not number actually inserted).
-    """
     if df.empty:
         return 0
 
@@ -106,18 +89,53 @@ def _insert_df(conn: psycopg.Connection, table: str, df: pd.DataFrame) -> int:
 
     return len(rows)
 
+def _insert_df_customers(conn: psycopg.Connection, df: pd.DataFrame) -> int:
+    req = ["customer_id", "region", "city", "cap"]
+    missing = [c for c in req if c not in df.columns]
+    if missing:
+        raise ValueError(f"customers DataFrame missing columns: {missing}")
+
+    if df.empty:
+        return 0
+
+    sub = df.loc[:, req].copy()
+    sub = sub.astype(object).where(pd.notna(sub), None)
+    rows = [tuple(r) for r in sub.to_numpy()]
+
+    stmt = sql.SQL("""
+        INSERT INTO customers (customer_id, region, city, cap)
+        VALUES ({vals})
+        ON CONFLICT (customer_id) DO UPDATE SET
+          region = EXCLUDED.region,
+          city   = EXCLUDED.city,
+          cap    = EXCLUDED.cap
+    """).format(vals=sql.SQL(", ").join(sql.Placeholder() for _ in req))
+
+    with conn.cursor() as cur:
+        for r in rows:
+            cur.execute(stmt, r)
+        conn.commit()
+    return len(rows)
+
+def _normalize_customers_df(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    # Make sure these exist; if not, this will raise in the upsert anyway
+    for col in ["customer_id", "region", "city", "cap"]:
+        if col in df.columns:
+            df[col] = df[col].astype("string")
+    # Digits only, left-pad to 5
+    if "cap" in df.columns:
+        df["cap"] = (
+            df["cap"]
+            .fillna("")
+            .str.replace(r"\D", "", regex=True)  # keep only digits
+            .str.zfill(5)
+        )
+    return df
+
 # ---------- Public API (used by main.py) ----------
 
 def drop_and_recreate_all(schema_path: Optional[Path] = None, schema_sql: Optional[str] = None) -> None:
-    """
-    Drop & recreate the database schema.
-
-    Provide your DDL either as:
-      - schema_sql: a single SQL string with DDL, OR
-      - schema_path: a Path to a .sql file (default search: ROOT_DIR / 'schema.sql').
-
-    This function intentionally contains NO inline DDL. It executes whatever you provide.
-    """
     if schema_sql is None:
         if schema_path is None:
             candidate = ROOT_DIR / "schema.sql"
@@ -134,10 +152,6 @@ def drop_and_recreate_all(schema_path: Optional[Path] = None, schema_sql: Option
         conn.commit()
 
 def load_processed_file(path: Path) -> None:
-    """
-    Load a single processed CSV into its table.
-    Accepts both per-year files (<table>_<year>_<ts>.csv) and the master categories file (categories_master_<ts>.csv).
-    """
     if isinstance(path, str):
         path = Path(path)
 
@@ -150,16 +164,17 @@ def load_processed_file(path: Path) -> None:
         table, year = _infer_from_processed_name(path)
 
     df = _read_processed_csv(path)
+    if table == "customers":
+        df = _normalize_customers_df(df)
     with _connect() as conn:
-        n = _insert_df(conn, table, df)
+        if table == "customers":
+            n = _insert_df_customers(conn, df)  # upsert
+        else:
+            n = _insert_df(conn, table, df)
 
     print(f"[load] OK → {table} ← {path.name} ({n:,} rows attempted)")
 
 def batch_load_year(year: int) -> None:
-    """
-    Load the latest processed file for each table for the given year.
-    Continues on errors and reports a summary at the end.
-    """
     latest = _latest_processed_per_table_for_year(year)
     if not latest:
         print(f"No processed files found for year {year}.")
@@ -175,8 +190,13 @@ def batch_load_year(year: int) -> None:
             continue
         try:
             df = _read_processed_csv(p)
+            if table == "customers":
+                df = _normalize_customers_df(df)
             with _connect() as conn:
-                n = _insert_df(conn, table, df)
+                if table == "customers":
+                    n = _insert_df_customers(conn, df)  # upsert
+                else:
+                    n = _insert_df(conn, table, df)
             results.append((table, f"PASSED ({n:,} rows)"))
         except Exception as e:
             results.append((table, f"FAILED ({type(e).__name__}: {e})"))
