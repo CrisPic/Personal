@@ -341,11 +341,6 @@ def full_etl_all_years():
         batch_load_year(y)
 
 def etl_one_year():
-    """
-    ETL for a chosen year:
-    - Ensure MASTER categories exist (build+load if missing)
-    - Transform + Load that year
-    """
     year_s = input("Enter year (e.g., 2016): ").strip()
     if not year_s.isdigit():
         print("Invalid year.")
@@ -394,26 +389,36 @@ def _advanced_menu():
 # ----------------- Entry point -----------------
 def main():
     while True:
-        print("\nSelect an option:")
-        print("1 - Full ETL (ALL years)")
-        print("2 - ETL for ONE year")
-        print("3 - Preview a RAW file")
-        print("4 - Advanced…")
-        print("5 - Exit")
-        choice = input("... ").strip()
+        try:
+            print("\nSelect an option:")
+            print("1 - Full ETL (ALL years)")
+            print("2 - ETL for ONE year")
+            print("3 - Preview a RAW file")
+            print("4 - Advanced…")
+            print("5 - Exit")
+            choice = input("... ").strip()
 
-        if choice == "1":
-            full_etl_all_years()
-        elif choice == "2":
-            etl_one_year()
-        elif choice == "3":
-            _preview_raw()
-        elif choice == "4":
-            _advanced_menu()
-        elif choice == "5":
-            break
-        else:
-            print("Invalid choice.")
+            if choice == "1":
+                full_etl_all_years()
+            elif choice == "2":
+                etl_one_year()
+            elif choice == "3":
+                _preview_raw()
+            elif choice == "4":
+                _advanced_menu()
+            elif choice == "5":
+                break
+            else:
+                print("Invalid choice.")
+        except KeyboardInterrupt:
+            print("\nstoped manually")
+            # optional: continue loop to show the menu again
+            # continue
+            # or: break to exit the app on Ctrl+C
+            # break
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nstoped manually")

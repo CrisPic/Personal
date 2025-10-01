@@ -34,32 +34,57 @@ def transform_customers(df):
 # Transform Products
 def transform_products(df, categories_df=None):
     df = df.copy()
-    # Keep a textual category when no mapping is provided
-    df['category'] = df['category'].astype('string').fillna('unknown')
+
+    # Keep textual category column (string) for reporting convenience
+    df['category'] = df['category'].astype('string')
+    df['category'] = df['category'].fillna('unknown')
 
     if categories_df is not None:
-        # Use a local ref to avoid rebinding the parameter name
+        # Expect master/per-year categories with: category_id, product_category_name_english
         cat_ref = categories_df[['category_id', 'product_category_name_english']].copy()
+
+        # Join on the original textual category
         df = df.merge(
             cat_ref,
             left_on='category',
             right_on='product_category_name_english',
             how='left'
         )
-        # Remove join helpers; keep only the mapped id
-        df.drop(columns=['category', 'product_category_name_english'], inplace=True, errors='ignore')
-        # Nullable integer for SQL NULL compatibility
+
+        # If we matched, prefer the canonical English name for the textual category;
+        # otherwise keep the original textual value
+        df['category'] = (
+            df['product_category_name_english']
+              .astype('string')
+              .fillna(df['category'])
+        )
+
+        # Keep both: `category_id` (nullable Int32) and `category` (string)
+        df.drop(columns=['product_category_name_english'], inplace=True, errors='ignore')
         df['category_id'] = df['category_id'].astype('Int32')
     else:
+        # No mapping provided: keep textual category only
         print("Warning: No categories DataFrame provided for mapping. Keeping category as string.")
+        # Ensure the `category_id` column exists and is nullable if the DB expects it
+        if 'category_id' not in df.columns:
+            df['category_id'] = pd.Series([pd.NA] * len(df), dtype='Int32')
 
     # Deduplicate by product_id
     df = df.drop_duplicates(subset=['product_id'])
 
-    # Ensure numeric types (nullable integers)
+    # Ensure numeric types (nullable small ints)
     df['product_name_length']        = pd.to_numeric(df['product_name_length'], errors='coerce').astype('Int16')
     df['product_description_length'] = pd.to_numeric(df['product_description_length'], errors='coerce').astype('Int16')
     df['product_photos_qty']         = pd.to_numeric(df['product_photos_qty'], errors='coerce').astype('Int16')
+
+    # (Optional but tidy) Consistent column ordering; loader doesn’t require this, it’s just nice.
+    preferred_order = [
+        'product_id', 'category_id', 'category',
+        'product_name_length', 'product_description_length', 'product_photos_qty'
+    ]
+    cols = [c for c in preferred_order if c in df.columns] + [c for c in df.columns if c not in preferred_order]
+    df = df[cols]
+
     return df
 
 # Transform Sellers
