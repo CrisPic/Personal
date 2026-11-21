@@ -1,0 +1,59 @@
+# Instruments for backtesting. Times are stored in UTC.
+#
+# source:      where M1 history comes from (dukascopy | binance)
+# symbol:      the symbol at that source
+# divisor:     Dukascopy stores prices as integers; price = int / divisor
+# pip:         size of one pip / point, used for spreads and stops
+# chart_clock: how higher timeframes are cut
+#              fx  = broker server time (New York close = midnight), like MT5/cTrader at FTMO
+#              utc = plain UTC days (crypto)
+# price_range: sanity bounds; a price outside them means a wrong divisor or bad data
+# spread_pips: fallback spread when the source has no ask prices
+
+EURUSD:
+  source: dukascopy
+  symbol: EURUSD
+  divisor: 100000
+  pip: 0.0001
+  chart_clock: fx
+  price_range: [0.8, 1.6]
+
+GBPUSD:
+  source: dukascopy
+  symbol: GBPUSD
+  divisor: 100000
+  pip: 0.0001
+  chart_clock: fx
+  price_range: [1.0, 1.8]
+
+GBPJPY:
+  source: dukascopy
+  symbol: GBPJPY
+  divisor: 1000
+  pip: 0.01
+  chart_clock: fx
+  price_range: [120, 230]
+
+US30:
+  source: dukascopy
+  symbol: USA30IDXUSD
+  divisor: 1000
+  pip: 1.0
+  chart_clock: fx
+  price_range: [15000, 60000]
+
+BTCUSD:
+  source: binance
+  symbol: BTCUSDT
+  pip: 1.0
+  chart_clock: utc
+  price_range: [3000, 300000]
+  spread_pips: 10
+
+ETHUSD:
+  source: binance
+  symbol: ETHUSDT
+  pip: 0.1
+  chart_clock: utc
+  price_range: [80, 15000]
+  spread_pips: 5
