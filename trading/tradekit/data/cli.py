@@ -15,6 +15,7 @@ from datetime import date
 import pandas as pd
 
 from . import binance, dukascopy
+from .http import FetchError
 from .instruments import get_instrument, load_instruments
 from .resample import resample
 from .store import load_m1, month_path, save_month
@@ -29,8 +30,10 @@ def months(start: str, end: str):
         y, m = (y + 1, 1) if m == 12 else (y, m + 1)
 
 
-def download(names: list[str], start: str, end: str, force: bool = False) -> int:
+def download(names: list[str], start: str, end: str, force: bool = False, workers: int = 2) -> int:
+    """Download month by month. A month with failed days is not stored; rerun later to fill it."""
     today = date.today()
+    incomplete = []
     for name in names:
         inst = get_instrument(name)
         for y, m in months(start, end):
@@ -43,12 +46,21 @@ def download(names: list[str], start: str, end: str, force: bool = False) -> int
                 continue
             if inst.source == "dukascopy":
                 last = today if current else date(y, m, calendar.monthrange(y, m)[1])
-                df = dukascopy.download_range(inst, date(y, m, 1), last)
+                df, failed = dukascopy.download_range(inst, date(y, m, 1), last, workers)
+                if failed:
+                    incomplete.append(f"{name} {y}-{m:02d}")
+                    print(f"{name} {y}-{m:02d}: {len(failed)} days failed (source busy); not stored, rerun later")
+                    continue
             else:
                 if current:
                     print(f"{name} {y}-{m:02d}: Binance publishes a month after it ends; skipped")
                     continue
-                df = binance.download_month(inst, y, m)
+                try:
+                    df = binance.download_month(inst, y, m)
+                except FetchError as exc:
+                    incomplete.append(f"{name} {y}-{m:02d}")
+                    print(f"{name} {y}-{m:02d}: failed ({exc}); not stored, rerun later")
+                    continue
             if df.empty:
                 print(f"{name} {y}-{m:02d}: no data")
                 continue
@@ -58,6 +70,10 @@ def download(names: list[str], start: str, end: str, force: bool = False) -> int
             print(f"{name} {y}-{m:02d}: {len(df):,} candles [{status}]")
             for line in rep.errors:
                 print(f"    ERROR {line}")
+    if incomplete:
+        print(f"\n{len(incomplete)} months not stored: {', '.join(incomplete)}")
+        print("Run the same command again later; stored months are skipped.")
+        return 2
     return 0
 
 
@@ -86,6 +102,7 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("--start", required=True, help="first month, YYYY-MM")
     d.add_argument("--end", required=True, help="last month, YYYY-MM")
     d.add_argument("--force", action="store_true", help="download months that are already stored")
+    d.add_argument("--workers", type=int, default=2, help="parallel days for Dukascopy (default 2; raise only if it is not throttling)")
     c = sub.add_parser("check", help="validate stored data")
     c.add_argument("instruments", nargs="+")
     s = sub.add_parser("show", help="print candles on any timeframe")
@@ -99,7 +116,7 @@ def main(argv: list[str] | None = None) -> int:
         return list(load_instruments()) if names == ["all"] else names
 
     if a.cmd == "download":
-        return download(expand(a.instruments), a.start, a.end, a.force)
+        return download(expand(a.instruments), a.start, a.end, a.force, a.workers)
     if a.cmd == "check":
         return check(expand(a.instruments))
     return show(a.instrument, a.timeframe, a.start, a.end)
