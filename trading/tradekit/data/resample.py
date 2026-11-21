@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-TIMEFRAMES = {"M1": "1min", "M3": "3min", "M5": "5min", "M15": "15min", "H1": "1h", "H4": "4h", "D1": "1D"}
+TIMEFRAMES = {"M1": "1min", "M2": "2min", "M3": "3min", "M5": "5min", "M15": "15min", "H1": "1h", "H4": "4h", "D1": "1D"}
 
 AGG = {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum", "spread": "first"}
 
