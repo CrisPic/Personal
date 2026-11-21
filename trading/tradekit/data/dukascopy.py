@@ -21,7 +21,7 @@ from datetime import date, timedelta
 import numpy as np
 import pandas as pd
 
-from .http import fetch
+from .http import FetchError, fetch
 from .instruments import Instrument
 
 BASE_URL = "https://datafeed.dukascopy.com/datafeed"
@@ -69,16 +69,28 @@ def download_day(inst: Instrument, day: date) -> pd.DataFrame:
     return bid
 
 
-def download_range(inst: Instrument, start: date, end: date, workers: int = 8) -> pd.DataFrame:
-    """Download [start, end] inclusive, one request pair per day, in parallel."""
+def download_range(inst: Instrument, start: date, end: date, workers: int = 2) -> tuple[pd.DataFrame, list[date]]:
+    """Download [start, end] inclusive, one request pair per day, a few days at a time.
+
+    Returns the candles and the days that still failed after all retries, so the
+    caller can skip an incomplete month instead of storing a hole or crashing.
+    """
     from concurrent.futures import ThreadPoolExecutor
 
     days = [start + timedelta(d) for d in range((end - start).days + 1)]
     days = [d for d in days if d.weekday() != 5]  # Saturday: market closed all day
+
+    def one(d):
+        try:
+            return d, download_day(inst, d)
+        except FetchError:
+            return d, None
+
     with ThreadPoolExecutor(workers) as pool:
-        frames = list(pool.map(lambda d: download_day(inst, d), days))
-    frames = [f for f in frames if not f.empty]
-    return pd.concat(frames).sort_index() if frames else _empty()
+        results = list(pool.map(one, days))
+    failed = [d for d, f in results if f is None]
+    frames = [f for _, f in results if f is not None and not f.empty]
+    return (pd.concat(frames).sort_index() if frames else _empty()), failed
 
 
 def _empty() -> pd.DataFrame:
