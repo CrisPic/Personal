@@ -19,6 +19,7 @@ class Instrument:
     price_range: tuple[float, float]
     divisor: int | None = None
     spread_pips: float | None = None
+    commission_pips: float = 0.0
 
 
 def load_instruments(path: Path = CONFIG_PATH) -> dict[str, Instrument]:
@@ -40,6 +41,7 @@ def load_instruments(path: Path = CONFIG_PATH) -> dict[str, Instrument]:
             price_range=tuple(cfg["price_range"]),
             divisor=cfg.get("divisor"),
             spread_pips=cfg.get("spread_pips"),
+            commission_pips=float(cfg.get("commission_pips", 0)),
         )
     return out
 

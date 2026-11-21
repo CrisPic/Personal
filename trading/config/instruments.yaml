@@ -9,6 +9,7 @@
 #              utc = plain UTC days (crypto)
 # price_range: sanity bounds; a price outside them means a wrong divisor or bad data
 # spread_pips: fallback spread when the source has no ask prices
+# commission_pips: round-trip commission in pips (approximate FTMO costs; check your account)
 
 EURUSD:
   source: dukascopy
@@ -17,6 +18,7 @@ EURUSD:
   pip: 0.0001
   chart_clock: fx
   price_range: [0.8, 1.6]
+  commission_pips: 0.6
 
 GBPUSD:
   source: dukascopy
@@ -25,6 +27,7 @@ GBPUSD:
   pip: 0.0001
   chart_clock: fx
   price_range: [1.0, 1.8]
+  commission_pips: 0.6
 
 GBPJPY:
   source: dukascopy
@@ -33,6 +36,7 @@ GBPJPY:
   pip: 0.01
   chart_clock: fx
   price_range: [120, 230]
+  commission_pips: 0.7
 
 US30:
   source: dukascopy
@@ -41,6 +45,7 @@ US30:
   pip: 1.0
   chart_clock: fx
   price_range: [15000, 60000]
+  commission_pips: 0
 
 BTCUSD:
   source: binance
@@ -49,6 +54,7 @@ BTCUSD:
   chart_clock: utc
   price_range: [3000, 300000]
   spread_pips: 10
+  commission_pips: 20
 
 ETHUSD:
   source: binance
@@ -57,3 +63,4 @@ ETHUSD:
   chart_clock: utc
   price_range: [80, 15000]
   spread_pips: 5
+  commission_pips: 10
