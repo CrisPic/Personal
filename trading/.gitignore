@@ -1,0 +1,4 @@
+# Downloaded market data (rebuild with the download command)
+data/
+__pycache__/
+.pytest_cache/
