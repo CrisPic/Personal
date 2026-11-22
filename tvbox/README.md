@@ -1,6 +1,6 @@
-# TV box setup (Xiaomi Mi Box 3)
+# TV box setup (Xiaomi TV Box S 3rd Gen)
 
-Scripts and notes to make a Mi Box 3 fast, clean and easy to use, and to copy the same setup onto a second box (the Christmas gift).
+Scripts and notes to make a Xiaomi TV Box S (3rd Gen, Google TV, Android 14) fast, clean and easy to use, and to copy the same setup onto a second box (the Christmas gift).
 Everything runs from a Mac over ADB. Nothing needs root, and every change can be undone.
 
 ## The plan
@@ -65,7 +65,7 @@ Extra options (add them after `--apply`):
 
 - **Turns off bloat and tracking apps** listed in [`config/packages-safe.txt`](config/packages-safe.txt): feedback and crash reporting, sponsored home screen rows, Ambient mode, Play Games, Play Movies, YouTube Music, sync services, printing, screensavers. Nothing needed for the remote, Wi-Fi, Bluetooth, the Play Store or video playback.
 - **Optional apps** in [`config/packages-optional.txt`](config/packages-optional.txt), only with `--optional`, one question each.
-- **Lists Xiaomi apps** it finds without touching them, so we can decide together.
+- **Lists other Xiaomi apps** it finds without touching them. Never turn off `com.mi.bluetooth` (the remote), `com.xiaomi.tvqs.*` (quick settings panel), `mitv.service`, `com.android.mitv.framework.rro` or `com.xiaomi.mitv.updateservice` (firmware updates).
 - **Halves menu animations** (1x to 0.5x): menus feel quicker.
 - **Clears app caches**: frees storage; apps keep their data and logins.
 - Prints **storage and RAM** before and after, and the apps using the most memory.

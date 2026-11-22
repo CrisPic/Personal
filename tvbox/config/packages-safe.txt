@@ -1,4 +1,4 @@
-# Packages that are safe to turn off on a Mi Box 3 used with a custom home screen.
+# Packages that are safe to turn off on a Xiaomi TV box.
 # Nothing here is needed for the remote, Wi-Fi, Bluetooth, the Play Store or app playback.
 # Format: package   # what it is
 com.google.android.feedback                     # Google feedback and crash reporting
@@ -17,3 +17,10 @@ com.android.printspooler                        # Printing service
 com.android.dreams.basic                        # Basic screensaver (colours)
 com.android.dreams.phototable                   # Photo screensaver
 com.google.android.marvin.talkback              # Screen reader (turn back on with restore.sh if needed)
+
+# --- Xiaomi TV Box S (3rd Gen, Google TV, Android 14) ---
+com.miui.tv.analytics                           # Xiaomi usage analytics
+com.xiaomi.statistic                            # Xiaomi statistics / telemetry
+com.mitv.tvhome.oemtab                          # Xiaomi promo tab on the Google TV home screen
+com.xiaomi.mimusic2                             # Xiaomi music player
+com.google.android.apps.tv.dreamx               # Google TV Ambient mode screensaver (downloads photos, uses RAM)
