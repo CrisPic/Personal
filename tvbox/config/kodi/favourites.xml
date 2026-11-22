@@ -1,7 +1,7 @@
 <!-- Copied into Kodi by install-kodi.sh. Used for the home screen menu items that open other apps.
      StartAndroidActivity(package) opens an Android app from inside Kodi. -->
 <favourites>
-    <favourite name="YouTube (SmartTube)">StartAndroidActivity(&quot;com.teamsmart.videomanager.tv&quot;)</favourite>
+    <favourite name="YouTube (SmartTube)">StartAndroidActivity(&quot;org.smarttube.stable&quot;)</favourite>
     <favourite name="Movies &amp; Series (Stremio)">StartAndroidActivity(&quot;com.stremio.one&quot;)</favourite>
     <favourite name="Spotify">StartAndroidActivity(&quot;com.spotify.tv.android&quot;)</favourite>
     <favourite name="Settings">StartAndroidActivity(&quot;com.android.tv.settings&quot;)</favourite>
