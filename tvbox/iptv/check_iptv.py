@@ -152,6 +152,8 @@ def check(ch, timeout):
         ch.reason = "timeout" if "timed out" in str(e) else str(e)[:80]
     except ValueError as e:
         ch.reason = str(e)
+    except Exception as e:  # noqa: BLE001 - any other failure (bad URL, odd encoding...) = dead channel
+        ch.reason = "%s: %s" % (type(e).__name__, str(e)[:60])
     ch.ok = False
     return ch
 
@@ -161,7 +163,7 @@ def norm(name):
     """Channel name reduced for matching: 'Rai 1 HD (1080p)' -> 'rai1'."""
     n = re.sub(r"\[[^\]]*\]|\([^)]*\)", " ", name.lower())
     n = re.sub(r"\b(hd|fhd|uhd|sd|4k|hevc|h265|backup|\d{3,4}p)\b", " ", n)
-    return re.sub(r"[^a-z0-9]", "", n)
+    return re.sub(r"[\W_]", "", n)  # keeps letters of any alphabet (Cyrillic too)
 
 
 def epg_channels(data):
