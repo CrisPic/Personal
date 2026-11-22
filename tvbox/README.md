@@ -160,6 +160,8 @@ python3 iptv/check_iptv.py \
   'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_russia.m3u8' \
   'https://iptv-org.github.io/iptv/countries/md.m3u' \
   'https://iptv-org.github.io/iptv/countries/ru.m3u' \
+  --epg 'https://epg.it999.ru/epg.xml.gz' \
+  --epg 'https://iptvx.one/epg/epg_lite.xml.gz' \
   --epg 'https://epgshare01.online/epgshare01/epg_ripper_viva-russia.ru.xml.gz' \
   --push
 ```
@@ -184,6 +186,9 @@ python3 iptv/check_iptv.py \
    - *General* → Location **Local path** → `/storage/emulated/0/Download/tvbox/channels.m3u`
    - *EPG* → Location **Local path** → `/storage/emulated/0/Download/tvbox/guide.xml.gz`
 3. Restart Kodi. Channels and the guide appear under **TV**.
+4. After pushing a **new** guide, Kodi keeps its old copy for up to 2 hours. To refresh it now: Settings → PVR & Live TV → **Guide** → **Clear data** (the one under *Guide*, not *General*).
+
+With the three guides above, 131 of 292 working Moldova and Russia channels have a guide (Nov 2026). Most of the rest are small regional channels that no free guide covers. For scripting Kodi over adb, see [docs/kodi-setup-notes.md](docs/kodi-setup-notes.md).
 
 ### Stremio
 
