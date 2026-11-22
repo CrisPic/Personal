@@ -109,12 +109,32 @@ def simulate(m1: pd.DataFrame, orders: list[Order], costs: Costs = Costs()) -> p
                 "exit": exit_px,
                 "reason": reason,
                 "R": net / risk,
+                "R_gross": gross / risk,  # before commission (spread and slippage included)
                 "planned_rr": abs(od.target - od.entry) / risk,
                 **od.meta,
             }
         )
         busy_until = t[exit_i]
     return pd.DataFrame(trades)
+
+
+def cost_filter(m1: pd.DataFrame, orders: list[Order], costs: Costs, min_mult: float) -> list[Order]:
+    """Drop orders whose risk is smaller than `min_mult` times the round-trip cost.
+
+    Cost = spread at the time the order is placed + commission + stop slippage.
+    With min_mult=5, costs can eat at most 20% of 1R.
+    """
+    if min_mult <= 0 or not orders:
+        return orders
+    t = m1.index.tz_convert("UTC").tz_localize(None).to_numpy() if m1.index.tz is not None else m1.index.to_numpy()
+    sp = m1["spread"].fillna(0).to_numpy(float) if "spread" in m1 else np.zeros(len(m1))
+    keep = []
+    for od in orders:
+        i = min(int(np.searchsorted(t, _np(od.placed), side="right")) - 1, len(t) - 1)
+        cost = sp[max(i, 0)] + costs.commission + costs.stop_slippage
+        if abs(od.entry - od.stop) >= min_mult * cost:
+            keep.append(od)
+    return keep
 
 
 def _first(mask: np.ndarray):
