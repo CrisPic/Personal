@@ -118,7 +118,7 @@ Google TV's own home screen stays installed as a fallback.
 2. **Add the skin's source**: Settings → File manager → Add source → type `https://jurialmunkey.github.io/repository.jurialmunkey/` and name it `jurial`.
 3. **Install the repository**: Settings → Add-ons → Install from zip file → `jurial` → `repository.jurialmunkey-*.zip`.
 4. **Install the skin**: Add-ons → Install from repository → jurialmunkey Alpha Repository → Look and feel → Skin → **Arctic Horizon 2** → Install, and say *Yes* to keep it. It's built for widgets (rows of posters) and still runs on 2 GB of RAM.
-5. **Install TMDb Helper**: same repository → Video add-ons → **TMDb Helper**. It provides the poster rows (Trending, Popular, Top rated...).
+5. **TMDb Helper** (the poster rows: Trending, Popular, Top rated...) is installed automatically with Arctic Horizon 2. Nothing to do. Don't try to replace it with a newer version: the skin depends on the one it installs.
 6. **Install IPTV Simple**: Add-ons → Install from repository → Kodi Add-on repository → PVR clients → **PVR IPTV Simple Client**. We'll give it your channels and guide in step 3.
 7. **Build the menu**: Settings → Skin settings → **Customise main menu**. Keep or create these items:
    - **TV** → action *Live TV*, widgets *Channels* and *Recently played channels*.
