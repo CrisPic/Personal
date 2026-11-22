@@ -112,6 +112,8 @@ Google TV's own home screen stays installed as a fallback.
 
 ### Set up Kodi (once, on the TV, about 10 minutes)
 
+**Tip: type from the Mac.** When a Kodi text field has its on-screen keyboard open, run `adb shell input text '<text>'` on the Mac and the text appears in the field. For example: `adb shell input text 'https://jurialmunkey.github.io/repository.jurialmunkey/'`. (On the remote, `:` and `/` are under the keyboard's **Symbols** button.)
+
 1. **Allow add-ons from outside Kodi's store**: Settings (gear) → System → Add-ons → turn on **Unknown sources**.
 2. **Add the skin's source**: Settings → File manager → Add source → type `https://jurialmunkey.github.io/repository.jurialmunkey/` and name it `jurial`.
 3. **Install the repository**: Settings → Add-ons → Install from zip file → `jurial` → `repository.jurialmunkey-*.zip`.
