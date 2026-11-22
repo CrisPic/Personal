@@ -7,3 +7,11 @@ com.google.android.apps.mediashell              # Chromecast built-in (you lose 
 com.google.android.katniss                      # Google Assistant / voice search (the mic button stops working)
 com.google.android.speech.pumpkin               # Offline voice commands (part of voice search)
 com.google.android.tts                          # Text-to-speech (only used by screen readers)
+
+# --- Xiaomi TV Box S (3rd Gen) ---
+com.mitv.tvhome.mitvplus                        # Xiaomi TV+ free channels (the TV+ remote button opens it)
+com.mitv.tvhome.michannel                       # Xiaomi channel rows used by TV+
+com.mitv.gallery                                # Xiaomi photo gallery for USB drives
+com.xiaomi.mi_connect_service                   # Mi Connect (control the box from a Xiaomi phone)
+com.xiaomi.mitv.smartshare                      # Screen mirroring from phones (Miracast)
+com.xiaomi.wfdsinkhelperservice                 # Screen mirroring helper (Miracast)
