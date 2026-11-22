@@ -2,8 +2,9 @@
 
 1. H4 structure sets the bias.
 2. H1 breaks in the bias direction leave order blocks: the points of interest (POI).
-3. When M1 price reaches an active POI, wait for an M1 CHoCH in the POI's
-   direction, then an M1 BOS in the same direction (both on candle closes).
+3. When M1 price reaches an active POI, wait for a CHoCH on the confirming
+   timeframe (`ltf`, M1 by default) in the POI's direction, then a BOS in the
+   same direction (both on candle closes).
 4. Entry: limit at the overlap of the M1 order block and the 0.618-0.786
    retracement of the BOS leg, or at the order block's midpoint if they do not overlap.
 5. Stop beyond the leg origin plus a buffer; target at a fixed RR.
@@ -33,6 +34,7 @@ class SMCParams:
     poi_tf: str = "H1"
     swing_n_htf: int = 3
     swing_n_ltf: int = 2
+    ltf: str = "M1"  # timeframe of the confirming CHoCH/BOS (M1, M3 or M5)
     zone_days: int = 10
     fib_lo: float = 0.618
     fib_hi: float = 0.786
@@ -60,7 +62,8 @@ def generate(m1: pd.DataFrame, inst: Instrument, p: SMCParams = SMCParams()) -> 
             b["known_at"] = b["time"] + pd.Timedelta(TIMEFRAMES[p.bias_tf])
             bias = b.set_index("known_at")["direction"].sort_index()
 
-    ltf = breaks_frame(find_breaks(m1, p.swing_n_ltf))
+    ltf_df = m1 if p.ltf == "M1" else resample(m1, p.ltf, clock)
+    ltf = breaks_frame(find_breaks(ltf_df, p.swing_n_ltf))
     if ltf.empty:
         return []
     ltf_known = ltf["known_at"].dt.tz_convert("UTC").dt.tz_localize(None).to_numpy()
@@ -68,6 +71,7 @@ def generate(m1: pd.DataFrame, inst: Instrument, p: SMCParams = SMCParams()) -> 
     t = m1.index
     tn = t.tz_convert("UTC").tz_localize(None).to_numpy()
     lo, hi, cl = (m1[k].to_numpy(float) for k in ("low", "high", "close"))
+    llo, lhi = ltf_df["low"].to_numpy(float), ltf_df["high"].to_numpy(float)
     buffer = p.buffer_pips * inst.pip
     orders: list[Order] = []
 
@@ -112,7 +116,7 @@ def generate(m1: pd.DataFrame, inst: Instrument, p: SMCParams = SMCParams()) -> 
             hour = placed.tz_convert("Europe/Rome").hour
             if not (p.session[0] <= hour < p.session[1]):
                 continue
-            od = _order(ev, d, hi, lo, placed, buffer, p, touch, z, lo, hi)
+            od = _order(ev, d, lhi, llo, placed, buffer, p, touch, z, lo, hi)
             if od is not None:
                 orders.append(od)
                 setups += 1
