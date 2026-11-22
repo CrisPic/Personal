@@ -63,9 +63,18 @@ sh_box am force-stop $KODI_PKG >/dev/null
 
 # ---------------------------------------------------------------- copy config
 info "Copying Kodi settings from config/kodi/ ..."
+COPY_FAILED=0
 for f in "$CONFIG_DIR"/kodi/*.xml; do
   [ -e "$f" ] || continue
-  adb -s "$DEVICE" push "$f" "$USERDATA/$(basename "$f")" >/dev/null && ok "  $(basename "$f")"
+  if adb -s "$DEVICE" push "$f" "$USERDATA/$(basename "$f")" >/dev/null 2>&1; then
+    ok "  $(basename "$f")"
+  else
+    COPY_FAILED=1
+  fi
 done
+if [ "$COPY_FAILED" = 1 ]; then
+  warn "This Android version doesn't let adb copy files into Kodi's folder (Android 14 blocks it)."
+  warn "That's fine: the files are optional. In the menu editor, pick apps from Programs > Android apps."
+fi
 
-ok "Kodi is ready. Open it on the TV and follow 'Step 2: set up Kodi' in the README."
+ok "Kodi is installed. Open it on the TV and follow 'Set up Kodi' in the README."
