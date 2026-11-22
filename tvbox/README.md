@@ -144,3 +144,43 @@ Notes:
 - On Xiaomi remotes the Home button may arrive as **All apps**. Record whatever Key Mapper shows.
 - If a button still opens its original app (Netflix, Prime, TV+), turn that app off with `./scripts/cleanup.sh --apply --optional` and try again. Some buttons are handled before Key Mapper sees them while their app is installed.
 - Back up your key maps from Key Mapper's menu (*Back up*). The gift box gets the same file in step 4.
+
+---
+
+## Step 3: fix the content sources
+
+### Live TV: test the channels and add a guide
+
+`iptv/check_iptv.py` tests every channel the way a player would. For HLS streams it follows the playlist down to an actual video segment. It writes a clean playlist that has only working channels in it. Python 3 comes with the Mac's developer tools; if `python3` is missing, run `brew install python`.
+
+```sh
+# Test a playlist (a URL or a file), check guide coverage, copy the result to the box
+python3 iptv/check_iptv.py 'https://example.com/playlist.m3u' --epg 'https://example.com/guide.xml.gz' --push
+```
+
+- Output goes to `iptv/output/`: `channels.m3u` (working channels only, sorted by group) and `report.txt` (dead channels and why, slow channels, channels with no guide, totals per group).
+- Duplicate streams are removed. `#EXTVLCOPT` user-agent/referrer lines and `|User-Agent=` URLs are kept and used while testing.
+- `--push` copies the playlist to the box as `Download/tvbox/channels.m3u`.
+- Run it again whenever channels stop working. Free channels change often.
+
+**Point Kodi at it (once):**
+
+1. Let Kodi read the Download folder: `adb shell pm grant org.xbmc.kodi android.permission.READ_EXTERNAL_STORAGE`
+2. In Kodi: Settings → Add-ons → My add-ons → PVR clients → IPTV Simple Client → **Configure**:
+   - *General* → Location **Local path** → `/storage/emulated/0/Download/tvbox/channels.m3u`
+   - *EPG* → Location **Remote path** → the guide URL you used with `--epg`
+3. Restart Kodi. Channels and the guide appear under **TV**.
+
+### Stremio
+
+- **Start-up loop:** run `./scripts/stremio-fix.sh`. It force-stops Stremio and its streaming server, clears caches (your add-ons and settings stay), and starts it again. It works from a distance too, once step 4 is done.
+- **Slow torrent streams:** open `https://torrentio.strem.fun/configure` on the Mac or a phone and set:
+  - **Sorting:** *By seeders*. More seeders means faster start and fewer stalls.
+  - **Exclude qualities:** *4K*, *Remux*, *HDR/DV*, *3D*, *CAM/Screener*. Huge 4K files stream badly on a 2 GB box, and CAM copies are poor.
+  - **Max results per quality:** *3*.
+  - Then **Install**, or copy the link and paste it into Stremio's add-on search on the box (send it from the Mac with `adb shell input text '<link>'`).
+- **Streaming cache:** in Stremio → Settings → Streaming, set **Caching** to *5 GB*. The box has more than 20 GB free, and a bigger cache helps when the connection dips.
+- **Subtitles out of sync:** subtitles only match a specific release of the film.
+  - Install the **OpenSubtitles v3** add-on from Stremio's add-on catalogue.
+  - In the player, choose subtitles whose name matches the stream's release name (for example both say *YTS* or *WEB-DL*). Those are timed for that exact file.
+  - If none match, use the subtitle **delay** setting in the player (± in 0.25 s steps), or pick a different stream with the same release name as a good subtitle.
