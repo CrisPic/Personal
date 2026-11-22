@@ -112,12 +112,14 @@ Google TV's own home screen stays installed as a fallback.
 
 ### Set up Kodi (once, on the TV, about 10 minutes)
 
+**Tip: type from the Mac.** When a Kodi text field has its on-screen keyboard open, run `adb shell input text '<text>'` on the Mac and the text appears in the field. For example: `adb shell input text 'https://jurialmunkey.github.io/repository.jurialmunkey/'`. (On the remote, `:` and `/` are under the keyboard's **Symbols** button.)
+
 1. **Allow add-ons from outside Kodi's store**: Settings (gear) → System → Add-ons → turn on **Unknown sources**.
 2. **Add the skin's source**: Settings → File manager → Add source → type `https://jurialmunkey.github.io/repository.jurialmunkey/` and name it `jurial`.
 3. **Install the repository**: Settings → Add-ons → Install from zip file → `jurial` → `repository.jurialmunkey-*.zip`.
 4. **Install the skin**: Add-ons → Install from repository → jurialmunkey Alpha Repository → Look and feel → Skin → **Arctic Horizon 2** → Install, and say *Yes* to keep it. It's built for widgets (rows of posters) and still runs on 2 GB of RAM.
-5. **Install TMDb Helper**: same repository → Video add-ons → **TMDb Helper**. It provides the poster rows (Trending, Popular, Top rated...).
-6. **Install IPTV Simple**: Add-ons → Install from repository → Kodi Add-on repository → PVR clients → **PVR IPTV Simple Client**. We'll give it your channels and guide in step 3.
+5. **TMDb Helper** (the poster rows: Trending, Popular, Top rated...) is installed automatically with Arctic Horizon 2. Nothing to do. Don't try to replace it with a newer version: the skin depends on the one it installs.
+6. **Turn on IPTV Simple** (it comes built into Kodi on Android, switched off): Settings → Add-ons → **My add-ons** → PVR clients → **IPTV Simple Client** → Enable. If you can't find it, use Add-ons → Search → `iptv`. It warns that it isn't set up yet: that's expected, the channels and guide come in step 3.
 7. **Build the menu**: Settings → Skin settings → **Customise main menu**. Keep or create these items:
    - **TV** → action *Live TV*, widgets *Channels* and *Recently played channels*.
    - **Movies & Series** → widgets from TMDb Helper (*Trending movies*, *Trending TV shows*, *Popular*). Set the item's own action to **Programs → Android apps → Stremio**.
@@ -142,3 +144,58 @@ Notes:
 - On Xiaomi remotes the Home button may arrive as **All apps**. Record whatever Key Mapper shows.
 - If a button still opens its original app (Netflix, Prime, TV+), turn that app off with `./scripts/cleanup.sh --apply --optional` and try again. Some buttons are handled before Key Mapper sees them while their app is installed.
 - Back up your key maps from Key Mapper's menu (*Back up*). The gift box gets the same file in step 4.
+
+---
+
+## Step 3: fix the content sources
+
+### Live TV: test the channels and add a guide
+
+`iptv/check_iptv.py` tests every channel the way a player would. For HLS streams it follows the playlist down to an actual video segment. It writes a clean playlist that has only working channels in it. Python 3 comes with the Mac's developer tools; if `python3` is missing, run `brew install python`.
+
+```sh
+# Moldova + Russia from Free-TV and iptv-org, with guides; copy the result to the box
+python3 iptv/check_iptv.py \
+  'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_moldova.m3u8' \
+  'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_russia.m3u8' \
+  'https://iptv-org.github.io/iptv/countries/md.m3u' \
+  'https://iptv-org.github.io/iptv/countries/ru.m3u' \
+  --epg 'https://epgshare01.online/epgshare01/epg_ripper_MD1.xml.gz' \
+  --epg 'https://epgshare01.online/epgshare01/epg_ripper_RU1.xml.gz' \
+  --push
+```
+
+- Give it any number of playlists (URLs or files). They're merged, and duplicate links are dropped.
+- iptv-org has one playlist per country: `https://iptv-org.github.io/iptv/countries/<code>.m3u` (`it`, `ro`, `de`, `es`, ...). The full list (`index.m3u`) has over 10,000 channels and takes a long time to test, so use the countries you watch.
+- When a channel name appears in several lists, only the fastest working copy is kept (`--keep-copies` keeps them all).
+- `--group News --group Sport` keeps only those groups.
+- **Guide:** pass one or more `--epg` guides (repeat the option). Without `--epg`, it uses any guide named in the playlists' own headers. Channels are matched to the guide by `tvg-id`, then by name. It then writes **one small guide** with only your channels, which is much lighter for Kodi on a 2 GB box than a full country guide.
+- Output goes to `iptv/output/`:
+  - `channels.m3u`: working channels only, sorted by group.
+  - `guide.xml.gz`: the small guide.
+  - `report.txt`: dead channels and why, slow channels, channels with no guide, totals per group.
+- `--push` copies the playlist and the guide to the box's `Download/tvbox/` folder.
+- `#EXTVLCOPT` user-agent/referrer lines and `|User-Agent=` URLs are kept, and used while testing.
+- Run it again whenever channels stop working. Free channels change often.
+
+**Point Kodi at it (once):**
+
+1. Let Kodi read the Download folder: `adb shell pm grant org.xbmc.kodi android.permission.READ_EXTERNAL_STORAGE`
+2. In Kodi: Settings → Add-ons → My add-ons → PVR clients → IPTV Simple Client → **Configure**:
+   - *General* → Location **Local path** → `/storage/emulated/0/Download/tvbox/channels.m3u`
+   - *EPG* → Location **Local path** → `/storage/emulated/0/Download/tvbox/guide.xml.gz`
+3. Restart Kodi. Channels and the guide appear under **TV**.
+
+### Stremio
+
+- **Start-up loop:** run `./scripts/stremio-fix.sh`. It force-stops Stremio and its streaming server, clears caches (your add-ons and settings stay), and starts it again. It works from a distance too, once step 4 is done.
+- **Slow torrent streams:** open `https://torrentio.strem.fun/configure` on the Mac or a phone and set:
+  - **Sorting:** *By seeders*. More seeders means faster start and fewer stalls.
+  - **Exclude qualities:** *4K*, *Remux*, *HDR/DV*, *3D*, *CAM/Screener*. Huge 4K files stream badly on a 2 GB box, and CAM copies are poor.
+  - **Max results per quality:** *3*.
+  - Then **Install**, or copy the link and paste it into Stremio's add-on search on the box (send it from the Mac with `adb shell input text '<link>'`).
+- **Streaming cache:** in Stremio → Settings → Streaming, set **Caching** to *5 GB*. The box has more than 20 GB free, and a bigger cache helps when the connection dips.
+- **Subtitles out of sync:** subtitles only match a specific release of the film.
+  - Install the **OpenSubtitles v3** add-on from Stremio's add-on catalogue.
+  - In the player, choose subtitles whose name matches the stream's release name (for example both say *YTS* or *WEB-DL*). Those are timed for that exact file.
+  - If none match, use the subtitle **delay** setting in the player (± in 0.25 s steps), or pick a different stream with the same release name as a good subtitle.
