@@ -3,8 +3,9 @@
     python -m tradekit.backtest A EURUSD GBPUSD US30 --start 2023-01 --end 2025-10
     python -m tradekit.backtest B GBPJPY --tf M2
     python -m tradekit.backtest A all --rr 2.5 --risk 0.5
+    python -m tradekit.backtest A all --ltf M5 --min-cost 5 --tag m5
 
-Writes results/{strategy}_{instrument}_trades.csv and prints a summary with
+Writes results/{strategy}[_{tag}]_{instrument}_trades.csv and prints a summary with
 win rate, R, drawdown and the FTMO 2-Step pass rate from weekly start dates.
 """
 from __future__ import annotations
@@ -19,20 +20,25 @@ import pandas as pd
 from . import ftmo, stats
 from .data.instruments import get_instrument, load_instruments
 from .data.store import load_m1
-from .engine import Costs, simulate
+from .engine import Costs, cost_filter, simulate
 from .strategies import ema_fib, smc
 
 RESULTS = Path(__file__).resolve().parents[1] / "results"
 
 
-def run_one(strategy: str, name: str, start: str | None, end: str | None, params) -> pd.DataFrame:
+def costs_for(inst) -> Costs:
+    return Costs(commission=inst.commission_pips * inst.pip, stop_slippage=0.2 * inst.pip)
+
+
+def run_one(strategy: str, name: str, start: str | None, end: str | None, params, min_cost: float = 0.0) -> pd.DataFrame:
     inst = get_instrument(name)
     m1 = load_m1(name, start, _end_exclusive(end))
     if strategy == "A":
         orders = smc.generate(m1, inst, params)
     else:
         orders = ema_fib.generate(m1, inst, params)
-    costs = Costs(commission=inst.commission_pips * inst.pip, stop_slippage=0.2 * inst.pip)
+    costs = costs_for(inst)
+    orders = cost_filter(m1, orders, costs, min_cost)
     trades = simulate(m1, orders, costs)
     if strategy == "B":
         trades = ema_fib.apply_daily_limits(trades, params)
@@ -51,6 +57,8 @@ def report(trades: pd.DataFrame, risk: float, title: str) -> str:
         f"trades {s['trades']}  ({s['trades_per_week']:.1f}/week)  win rate {s['win_rate']:.1%}  "
         f"avg {s['avg_R']:+.3f}R  total {s['total_R']:+.1f}R  PF {s['profit_factor']:.2f}"
     )
+    if "R_gross" in trades:
+        lines.append(f"avg before commission {trades['R_gross'].mean():+.3f}R")
     lines.append(f"max drawdown {s['max_dd_R']:.1f}R  worst losing streak {s['worst_losing_streak']}  avg win {s['avg_win_R']:.2f}R")
     lines.append("by year:\n" + stats.by_year(trades).round(3).to_string())
     f = ftmo.summarize(ftmo.replay(trades, risk_pct=risk))
@@ -82,6 +90,9 @@ def main(argv=None) -> int:
     ap.add_argument("--rr", type=float, help="Strategy A: fixed risk-reward")
     ap.add_argument("--tf", help="Strategy B: timeframe of the EMA cross (M2 or M3)")
     ap.add_argument("--no-bias", action="store_true", help="Strategy A: ignore the H4 bias")
+    ap.add_argument("--ltf", help="Strategy A: timeframe of the CHoCH/BOS confirmation (M1, M3, M5)")
+    ap.add_argument("--min-cost", type=float, default=0.0, help="skip setups whose risk is under N times the trading cost")
+    ap.add_argument("--tag", default="", help="suffix for the results files, so runs do not overwrite each other")
     a = ap.parse_args(argv)
 
     names = list(load_instruments()) if a.instruments == ["all"] else a.instruments
@@ -91,21 +102,24 @@ def main(argv=None) -> int:
             params = replace(params, rr=a.rr)
         if a.no_bias:
             params = replace(params, use_bias=False)
+        if a.ltf:
+            params = replace(params, ltf=a.ltf)
     else:
         params = ema_fib.EMAFibParams()
         if a.tf:
             params = replace(params, tf=a.tf)
 
     RESULTS.mkdir(exist_ok=True)
-    print(f"Strategy {a.strategy} {params}")
+    print(f"Strategy {a.strategy} {params} min_cost={a.min_cost}")
     all_trades = []
     for name in names:
         try:
-            t = run_one(a.strategy, name, a.start, a.end, params)
+            t = run_one(a.strategy, name, a.start, a.end, params, a.min_cost)
         except FileNotFoundError as exc:
             print(f"  {name}: skipped ({exc})")
             continue
-        t.to_csv(RESULTS / f"{a.strategy}_{name}_trades.csv", index=False)
+        prefix = f"{a.strategy}_{a.tag}" if a.tag else a.strategy
+        t.to_csv(RESULTS / f"{prefix}_{name}_trades.csv", index=False)
         print(report(t, a.risk, f"Strategy {a.strategy} · {name}"))
         all_trades.append(t)
     if len(all_trades) > 1:

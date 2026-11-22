@@ -175,3 +175,41 @@ def test_strategy_b_orders_and_daily_limits(walk):
     tr = ema_fib.apply_daily_limits(simulate(scaled, orders), p)
     per_day = tr.groupby(tr.entry_time.dt.tz_convert("Europe/Rome").dt.date).size()
     assert per_day.max() <= 2
+
+
+# ---------- cost filter, LTF option, sweep grid ----------
+
+def test_cost_filter_drops_tiny_stops():
+    from tradekit.engine import cost_filter
+    df = candles([1.10] * 10)
+    df["spread"] = 0.0001  # 1 pip
+    costs = Costs(commission=0.00006, stop_slippage=0.00002)  # total cost 1.8 pips
+    tiny = Order(df.index[1], df.index[-1], 1, 1.1000, 1.0995, 1.1015)  # 5 pip risk
+    wide = Order(df.index[1], df.index[-1], 1, 1.1000, 1.0980, 1.1060)  # 20 pip risk
+    kept = cost_filter(df, [tiny, wide], costs, 5)
+    assert kept == [wide]
+    assert cost_filter(df, [tiny, wide], costs, 0) == [tiny, wide]
+
+
+def test_trades_report_gross_r():
+    df = candles([1.10, 1.098, 1.095, 1.097, 1.10, 1.105, 1.112, 1.12])
+    od = Order(df.index[0], df.index[-1], 1, entry=1.096, stop=1.090, target=1.108)
+    tr = simulate(df, [od], Costs(commission=0.0006))
+    assert tr.R_gross[0] == pytest.approx(2.0) and tr.R[0] == pytest.approx(1.9)
+
+
+def test_strategy_a_on_m5_confirmation_has_wider_stops(walk):
+    inst = get_instrument("EURUSD")
+    m1 = smc.generate(walk, inst, smc.SMCParams(use_bias=False))
+    m5 = smc.generate(walk, inst, smc.SMCParams(use_bias=False, ltf="M5"))
+    _check_orders(m5, walk)
+    med = lambda os: np.median([abs(o.entry - o.stop) for o in os])
+    assert med(m5) > med(m1)
+
+
+def test_sweep_grid_parsing():
+    from tradekit.sweep import parse_grid
+    g = parse_grid(["ltf=M1,M5", "rr=2,3", "min_cost=0,5"], smc.SMCParams())
+    assert len(g) == 8 and g[0] == {"ltf": "M1", "rr": 2.0, "min_cost": 0.0}
+    with pytest.raises(SystemExit):
+        parse_grid(["nope=1"], smc.SMCParams())
