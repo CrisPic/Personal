@@ -20,20 +20,40 @@ require_adb() {
   command -v adb >/dev/null 2>&1 || die "adb not found. Install it with:  brew install android-platform-tools"
 }
 
-# connect_box <ip[:port]>  -> sets DEVICE (serial used for every adb call)
+# Serials of devices adb is connected to and authorised on.
+connected_devices() { adb devices 2>/dev/null | tr -d '\r' | awk 'NR>1 && $2=="device"{print $1}'; }
+
+# connect_box [ip[:port]]  -> sets DEVICE (serial used for every adb call)
+# With no argument, uses the only box adb is already connected to.
 connect_box() {
-  local target="$1"
-  [ -n "$target" ] || die "Give the box IP address, e.g.  $0 192.168.1.50"
-  case "$target" in *:*) ;; *) target="$target:5555" ;; esac
-  info "Connecting to $target ..."
-  adb connect "$target" >/dev/null 2>&1
-  local state
-  state="$(adb -s "$target" get-state 2>/dev/null)"
-  if [ "$state" != "device" ]; then
-    die "Could not connect to $target (state: ${state:-none}).
+  local target="$1" out state found count
+  if [ -z "$target" ]; then
+    count="$(connected_devices | wc -l | tr -d ' ')"
+    [ "$count" = 1 ] || die "Give the box address, e.g.  $0 192.168.1.50:37245
+  (adb is connected to $count devices right now; see: adb devices)"
+    target="$(connected_devices)"
+  else
+    case "$target" in *:*) ;; *) target="$target:5555" ;; esac
+    info "Connecting to $target ..."
+    out="$(adb connect "$target" 2>&1 | tr -d '\r')"
+    state="$(adb -s "$target" get-state 2>/dev/null | tr -d '\r')"
+    if [ "$state" != "device" ]; then
+      # Wireless debugging may already have connected the box under another name
+      # (e.g. adb-XXXX._adb-tls-connect._tcp). Use it if it's the only box connected.
+      found="$(connected_devices | grep -F "${target%%:*}" | head -1)"
+      [ -n "$found" ] || { [ "$(connected_devices | wc -l | tr -d ' ')" = 1 ] && found="$(connected_devices)"; }
+      if [ -n "$found" ]; then
+        warn "Using the box adb is already connected to: $found"
+        target="$found"
+      else
+        die "Could not connect to $target.
+  adb said: ${out:-nothing}
+  - Wireless debugging: use the IP and port on the MAIN Wireless debugging screen,
+    not the port on the 'Pair device with pairing code' screen. Pair once first with:  adb pair <ip:pairing-port>
   - Is the box on and on the same Wi-Fi as this Mac?
-  - Is 'USB debugging' / 'Network debugging' on in Developer options?
   - Look at the TV: you may need to accept the 'Allow debugging?' prompt, then run this again."
+      fi
+    fi
   fi
   DEVICE="$target"
   ok "Connected: $(sh_box getprop ro.product.model) (Android $(sh_box getprop ro.build.version.release))"
