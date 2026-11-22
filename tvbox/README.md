@@ -31,6 +31,14 @@ cd Personal/tvbox
 2. Settings → Device Preferences → **Developer options** → turn on **USB debugging** (on some firmware there is also **Network debugging**: turn it on too).
 3. Settings → Network & Internet → your Wi-Fi → note the **IP address** (for example `192.168.1.50`).
 
+**Wireless debugging (Android 11 and newer)**: if Developer options has **Wireless debugging**, use it instead:
+
+1. Turn on **Wireless debugging** and open it.
+2. Choose **Pair device with pairing code**, then on the Mac run `adb pair <ip>:<pairing port>` and type the 6-digit code. You only do this once per Mac.
+3. Go back to the main Wireless debugging screen and use the IP and port under **IP address & port** with the scripts, e.g. `./scripts/cleanup.sh 192.168.0.168:37245`. This port is different from the pairing port and can change after a restart.
+
+If adb is already connected to just one box, you can also leave the address out: `./scripts/cleanup.sh`.
+
 The first time you connect, the TV shows **"Allow USB debugging?"**. Tick *Always allow from this computer* and press OK.
 
 ### Run it
@@ -77,5 +85,5 @@ Every run with `--apply` saves a backup in `backups/<box serial>/<date>/` (not u
 ### If something goes wrong
 
 - **"adb not found"**: run `brew install android-platform-tools`.
-- **"Could not connect"**: check the box is on the same Wi-Fi, that USB debugging is on, and look at the TV for the *Allow debugging* prompt. Then run the command again.
+- **"Could not connect"**: with Wireless debugging, make sure you used the port from the main screen, not the pairing port. Otherwise check the box is on the same Wi-Fi, that USB debugging is on, and look at the TV for the *Allow debugging* prompt. Then run the command again.
 - **An app you need stopped working**: run `restore.sh`, or turn on just that one app with `adb -s <ip>:5555 shell pm enable <package>`.
