@@ -1,0 +1,9 @@
+# Packages that some people still use. cleanup.sh asks about each one when run with --optional.
+# Format: package   # what it is (and what you lose)
+com.google.android.youtube.tv                   # Official YouTube app (SmartTube replaces it)
+com.netflix.ninja                               # Netflix (only if nobody has a Netflix account)
+com.amazon.amazonvideo.livingroom               # Prime Video (only if nobody has Prime)
+com.google.android.apps.mediashell              # Chromecast built-in (you lose casting from phones)
+com.google.android.katniss                      # Google Assistant / voice search (the mic button stops working)
+com.google.android.speech.pumpkin               # Offline voice commands (part of voice search)
+com.google.android.tts                          # Text-to-speech (only used by screen readers)
