@@ -77,7 +77,7 @@ fi
 # ---------------------------------------------------------------- report
 info ""
 info "Apps the remote buttons will open:"
-for p in com.teamsmart.videomanager.tv com.liskovsoft.smarttubetv.beta com.stremio.one $KODI_PKG; do
+for p in org.smarttube.stable org.smarttube.beta com.teamsmart.videomanager.tv com.liskovsoft.smarttubetv.beta com.stremio.one $KODI_PKG; do
   is_installed "$p" && info "  ✓ $p"
 done
 info ""
