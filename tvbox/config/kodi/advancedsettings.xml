@@ -1,0 +1,10 @@
+<!-- Copied into Kodi by install-kodi.sh. Tuned for a 2 GB RAM box. -->
+<advancedsettings version="1.0">
+    <!-- Don't scan for new files at every start: faster boot. -->
+    <videolibrary>
+        <backgroundupdate>true</backgroundupdate>
+    </videolibrary>
+    <!-- Smaller thumbnails use less memory and storage on a 1080p/4K UI. -->
+    <imageres>540</imageres>
+    <fanartres>1080</fanartres>
+</advancedsettings>
