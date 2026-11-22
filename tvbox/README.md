@@ -154,13 +154,25 @@ Notes:
 `iptv/check_iptv.py` tests every channel the way a player would. For HLS streams it follows the playlist down to an actual video segment. It writes a clean playlist that has only working channels in it. Python 3 comes with the Mac's developer tools; if `python3` is missing, run `brew install python`.
 
 ```sh
-# Test a playlist (a URL or a file), check guide coverage, copy the result to the box
-python3 iptv/check_iptv.py 'https://example.com/playlist.m3u' --epg 'https://example.com/guide.xml.gz' --push
+# Free-TV (all countries) + iptv-org Italy, with an Italian guide; copy the result to the box
+python3 iptv/check_iptv.py \
+  'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8' \
+  'https://iptv-org.github.io/iptv/countries/it.m3u' \
+  --epg 'https://epgshare01.online/epgshare01/epg_ripper_IT1.xml.gz' \
+  --push
 ```
 
-- Output goes to `iptv/output/`: `channels.m3u` (working channels only, sorted by group) and `report.txt` (dead channels and why, slow channels, channels with no guide, totals per group).
-- Duplicate streams are removed. `#EXTVLCOPT` user-agent/referrer lines and `|User-Agent=` URLs are kept and used while testing.
-- `--push` copies the playlist to the box as `Download/tvbox/channels.m3u`.
+- Give it any number of playlists (URLs or files). They're merged, and duplicate links are dropped.
+- iptv-org has one playlist per country: `https://iptv-org.github.io/iptv/countries/<code>.m3u` (`it`, `ro`, `de`, `es`, ...). The full list (`index.m3u`) has over 10,000 channels and takes a long time to test, so use the countries you watch.
+- When a channel name appears in several lists, only the fastest working copy is kept (`--keep-copies` keeps them all).
+- `--group News --group Sport` keeps only those groups.
+- **Guide:** pass one or more `--epg` guides (repeat the option). Without `--epg`, it uses any guide named in the playlists' own headers. Channels are matched to the guide by `tvg-id`, then by name. It then writes **one small guide** with only your channels, which is much lighter for Kodi on a 2 GB box than a full country guide.
+- Output goes to `iptv/output/`:
+  - `channels.m3u`: working channels only, sorted by group.
+  - `guide.xml.gz`: the small guide.
+  - `report.txt`: dead channels and why, slow channels, channels with no guide, totals per group.
+- `--push` copies the playlist and the guide to the box's `Download/tvbox/` folder.
+- `#EXTVLCOPT` user-agent/referrer lines and `|User-Agent=` URLs are kept, and used while testing.
 - Run it again whenever channels stop working. Free channels change often.
 
 **Point Kodi at it (once):**
@@ -168,7 +180,7 @@ python3 iptv/check_iptv.py 'https://example.com/playlist.m3u' --epg 'https://exa
 1. Let Kodi read the Download folder: `adb shell pm grant org.xbmc.kodi android.permission.READ_EXTERNAL_STORAGE`
 2. In Kodi: Settings → Add-ons → My add-ons → PVR clients → IPTV Simple Client → **Configure**:
    - *General* → Location **Local path** → `/storage/emulated/0/Download/tvbox/channels.m3u`
-   - *EPG* → Location **Remote path** → the guide URL you used with `--epg`
+   - *EPG* → Location **Local path** → `/storage/emulated/0/Download/tvbox/guide.xml.gz`
 3. Restart Kodi. Channels and the guide appear under **TV**.
 
 ### Stremio
