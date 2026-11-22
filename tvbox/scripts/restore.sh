@@ -31,6 +31,15 @@ while read -r type name old; do
       fi
       is_disabled "$name" && warn "still off: $name" || ok "turned back on  $name"
       ;;
+    home)
+      if [ -n "$old" ] && printf '%s' "$old" | grep -q /; then
+        sh_box cmd package set-home-activity --user 0 "$old" >/dev/null
+        ok "home app set back to $old"
+      fi
+      ;;
+    installed)
+      info "  $name was installed by the scripts; left installed (remove it from Settings > Apps if you want)"
+      ;;
     setting)
       ns="${name%%/*}"; key="${name#*/}"
       if [ "$old" = "null" ] || [ -z "$old" ]; then
