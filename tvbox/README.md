@@ -103,7 +103,7 @@ How it fits together:
 ### Run the scripts
 
 ```sh
-./scripts/install-kodi.sh   # downloads the right Kodi for the box, installs it, copies config/kodi/*
+./scripts/install-kodi.sh   # downloads the right Kodi for the box, installs it, copies config/kodi/* (optional; Android 14 blocks this)
 ./scripts/set-home.sh       # installs Key Mapper, turns on its permission, sets Kodi as home
 ```
 
@@ -120,8 +120,8 @@ Google TV's own home screen stays installed as a fallback.
 6. **Install IPTV Simple**: Add-ons → Install from repository → Kodi Add-on repository → PVR clients → **PVR IPTV Simple Client**. We'll give it your channels and guide in step 3.
 7. **Build the menu**: Settings → Skin settings → **Customise main menu**. Keep or create these items:
    - **TV** → action *Live TV*, widgets *Channels* and *Recently played channels*.
-   - **Movies & Series** → widgets from TMDb Helper (*Trending movies*, *Trending TV shows*, *Popular*). Set the item's own action to the favourite *Movies & Series (Stremio)*.
-   - **YouTube** → action: favourite *YouTube (SmartTube)*.
+   - **Movies & Series** → widgets from TMDb Helper (*Trending movies*, *Trending TV shows*, *Popular*). Set the item's own action to **Programs → Android apps → Stremio**.
+   - **YouTube** → action: **Programs → Android apps → SmartTube**.
    - Remove the menu items you don't use (Music, Pictures, Games...).
 
 If Arctic Horizon 2 ever feels slow, switch back to Kodi's built-in Estuary skin: Settings → Interface → Skin.
