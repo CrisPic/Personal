@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Step 1: debloat and speed up a Xiaomi Mi Box 3 (or any Android TV box) over ADB.
+# Step 1: debloat and speed up a Xiaomi TV Box S (or any Android TV / Google TV box) over ADB.
 #
 #   ./cleanup.sh <box-ip>                 dry run: shows what would change, changes nothing
 #   ./cleanup.sh <box-ip> --apply         makes the changes
@@ -90,8 +90,10 @@ if [ "$OPTIONAL" = 1 ]; then
 fi
 
 info ""
-info "== Vendor apps found (not touched, listed so you can review them) =="
-sh_box pm list packages | sed 's/^package://' | grep -Ei 'xiaomi|mitv|miui|com\.mi\.' | sort | sed 's/^/  /'
+info "== Other Xiaomi apps (not touched, listed so you can review them) =="
+sh_box pm list packages | sed 's/^package://' | grep -Ei 'xiaomi|mitv|miui|com\.mi\.' \
+  | grep -vxF -f <(read_list "$CONFIG_DIR/packages-safe.txt"; read_list "$CONFIG_DIR/packages-optional.txt") \
+  | sort | sed 's/^/  /'
 
 # ---------------------------------------------------------------- settings
 set_setting() { # set_setting <namespace> <key> <value>
