@@ -1,0 +1,19 @@
+# Packages that are safe to turn off on a Mi Box 3 used with a custom home screen.
+# Nothing here is needed for the remote, Wi-Fi, Bluetooth, the Play Store or app playback.
+# Format: package   # what it is
+com.google.android.feedback                     # Google feedback and crash reporting
+com.google.android.tvrecommendations            # "Recommended for you" / sponsored rows on the stock home screen
+com.google.android.leanbacklauncher.recommendations  # Same, for the older home screen
+com.google.android.partnersetup                 # Partner setup and tracking
+com.google.android.backdrop                     # Ambient mode screensaver (keeps downloading photos, uses RAM)
+com.google.android.play.games                   # Google Play Games
+com.google.android.videos                       # Google Play Movies / Google TV app
+com.google.android.youtube.tvmusic              # YouTube Music
+com.google.android.tvtutorials                  # Built-in tutorial videos
+com.google.android.syncadapters.calendar        # Calendar sync (no use on a TV)
+com.google.android.syncadapters.contacts        # Contacts sync (no use on a TV)
+com.android.providers.partnerbookmarks          # Partner bookmarks
+com.android.printspooler                        # Printing service
+com.android.dreams.basic                        # Basic screensaver (colours)
+com.android.dreams.phototable                   # Photo screensaver
+com.google.android.marvin.talkback              # Screen reader (turn back on with restore.sh if needed)
