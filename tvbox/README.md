@@ -154,11 +154,14 @@ Notes:
 `iptv/check_iptv.py` tests every channel the way a player would. For HLS streams it follows the playlist down to an actual video segment. It writes a clean playlist that has only working channels in it. Python 3 comes with the Mac's developer tools; if `python3` is missing, run `brew install python`.
 
 ```sh
-# Free-TV (all countries) + iptv-org Italy, with an Italian guide; copy the result to the box
+# Moldova + Russia from Free-TV and iptv-org, with guides; copy the result to the box
 python3 iptv/check_iptv.py \
-  'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8' \
-  'https://iptv-org.github.io/iptv/countries/it.m3u' \
-  --epg 'https://epgshare01.online/epgshare01/epg_ripper_IT1.xml.gz' \
+  'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_moldova.m3u8' \
+  'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_russia.m3u8' \
+  'https://iptv-org.github.io/iptv/countries/md.m3u' \
+  'https://iptv-org.github.io/iptv/countries/ru.m3u' \
+  --epg 'https://epgshare01.online/epgshare01/epg_ripper_MD1.xml.gz' \
+  --epg 'https://epgshare01.online/epgshare01/epg_ripper_RU1.xml.gz' \
   --push
 ```
 
