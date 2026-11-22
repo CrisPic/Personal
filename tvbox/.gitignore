@@ -1,2 +1,3 @@
 # Per-box backups made by the scripts (device serials, package lists)
 backups/
+.downloads/
