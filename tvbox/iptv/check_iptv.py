@@ -237,12 +237,18 @@ def main():
     channels, header_epgs = [], []
     for src in a.playlists:
         print("Reading %s" % src)
-        header, chs = parse_m3u(read_source(src).decode("utf-8", "replace"))
+        try:
+            header, chs = parse_m3u(read_source(src).decode("utf-8", "replace"))
+        except Exception as e:  # noqa: BLE001 - skip a missing list, keep the others
+            print("  could not read it, skipping: %s" % e)
+            continue
         for key in ("x-tvg-url", "url-tvg"):
             for u in attr(header, key).split(","):
                 if u.strip() and u.strip() not in header_epgs:
                     header_epgs.append(u.strip())
         channels += chs
+    if not channels:
+        sys.exit("No channels found in any playlist.")
     if a.group:
         wanted = {g.lower() for g in a.group}
         channels = [c for c in channels if any(w in c.group.lower() for w in wanted)]
