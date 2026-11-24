@@ -90,6 +90,7 @@ def main(argv=None) -> int:
     ap.add_argument("--rr", type=float, help="Strategy A: fixed risk-reward")
     ap.add_argument("--tf", help="Strategy B: timeframe of the EMA cross (M2 or M3)")
     ap.add_argument("--no-bias", action="store_true", help="Strategy A: ignore the H4 bias")
+    ap.add_argument("--preset", choices=["cristian"], help="Strategy A: rules as drawn in Cristian's markups")
     ap.add_argument("--ltf", help="Strategy A: timeframe of the CHoCH/BOS confirmation (M1, M3, M5)")
     ap.add_argument("--min-cost", type=float, default=0.0, help="skip setups whose risk is under N times the trading cost")
     ap.add_argument("--tag", default="", help="suffix for the results files, so runs do not overwrite each other")
@@ -97,7 +98,7 @@ def main(argv=None) -> int:
 
     names = list(load_instruments()) if a.instruments == ["all"] else a.instruments
     if a.strategy == "A":
-        params = smc.SMCParams()
+        params = smc.cristian() if a.preset == "cristian" else smc.SMCParams()
         if a.rr:
             params = replace(params, rr=a.rr)
         if a.no_bias:

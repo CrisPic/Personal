@@ -44,6 +44,24 @@ class SMCParams:
     session: tuple[int, int] = (7, 12)  # Italian time, [start, end)
     reentries: int = 1
     use_bias: bool = True
+    # How Cristian marks his setups (Nov 2026 US30 markups):
+    trigger: str = "choch_bos"  # "choch": enter after the CoC alone; "choch_bos": wait for a BOS too
+    entry_mode: str = "ob_fib"  # "fib": limit at entry_fib of the leg; "ob_fib": OB / fib-zone overlap
+    entry_fib: float = 0.705
+    target_mode: str = "rr"  # "rr": fixed RR; "fib_ext": the -tp_ext extension of the leg
+    tp_ext: float = 0.5
+    require_sweep: bool = False  # the leg origin must take out the lows/highs of sweep_minutes before it
+    sweep_minutes: int = 60
+
+
+def cristian(**kw) -> "SMCParams":
+    """The rules as drawn in Cristian's Nov 2026 markups: POI -> sweep -> M1 CoC ->
+    fib on the CoC leg, entry 0.705, stop at the 1.0 anchor, target at the -0.5 extension."""
+    base = dict(trigger="choch", entry_mode="fib", entry_fib=0.705, target_mode="fib_ext",
+                tp_ext=0.5, require_sweep=True, buffer_pips=0.0, session=(7, 15),
+                use_bias=False)  # he also takes counter-trend setups (target capped at the next POI)
+    base.update(kw)
+    return SMCParams(**base)
 
 
 def generate(m1: pd.DataFrame, inst: Instrument, p: SMCParams = SMCParams()) -> list[Order]:
@@ -105,18 +123,22 @@ def generate(m1: pd.DataFrame, inst: Instrument, p: SMCParams = SMCParams()) -> 
             if ev.direction != d:
                 seen_choch = False
                 continue
-            if ev.kind == "CHoCH":
-                seen_choch = True
-                continue
-            if not seen_choch:
-                continue
-            # CHoCH then BOS in our direction: a setup
-            seen_choch = False
+            if p.trigger == "choch":
+                if ev.kind != "CHoCH":
+                    continue
+            else:
+                if ev.kind == "CHoCH":
+                    seen_choch = True
+                    continue
+                if not seen_choch:
+                    continue
+                # CHoCH then BOS in our direction: a setup
+                seen_choch = False
             placed = ev.known_at
             hour = placed.tz_convert("Europe/Rome").hour
             if not (p.session[0] <= hour < p.session[1]):
                 continue
-            od = _order(ev, d, lhi, llo, placed, buffer, p, touch, z, lo, hi)
+            od = _order(ev, d, lhi, llo, placed, buffer, p, _idx(tn, ev.time), z, lo, hi)
             if od is not None:
                 orders.append(od)
                 setups += 1
@@ -125,34 +147,47 @@ def generate(m1: pd.DataFrame, inst: Instrument, p: SMCParams = SMCParams()) -> 
     return orders
 
 
-def _order(ev, d, hi, lo, placed, buffer, p, touch, z, low_arr, high_arr):
+def _order(ev, d, hi, lo, placed, buffer, p, at, z, low_arr, high_arr):
+    """`hi`/`lo` are on the confirming timeframe; `low_arr`/`high_arr` are M1, `at` is the M1 index of the break."""
     o, b = ev.origin_bar, ev.bar
+    o_m1 = at - (b - o) * _ratio(p.ltf)  # M1 index of the leg origin, approx.
+    look = slice(max(o_m1 - p.sweep_minutes, 0), max(o_m1 - 2, 0))
     if d == 1:
         ext = hi[o:b + 1].max()
         rng = ext - ev.origin_price
         if rng <= 0:
             return None
-        f_hi, f_lo = ext - p.fib_lo * rng, ext - p.fib_hi * rng
-        top, bot = min(f_hi, ev.ob_high), max(f_lo, ev.ob_low)
-        entry = top if top > bot else (ev.ob_low + ev.ob_high) / 2
+        if p.entry_mode == "fib":
+            entry = ext - p.entry_fib * rng
+        else:
+            f_hi, f_lo = ext - p.fib_lo * rng, ext - p.fib_hi * rng
+            top, bot = min(f_hi, ev.ob_high), max(f_lo, ev.ob_low)
+            entry = top if top > bot else (ev.ob_low + ev.ob_high) / 2
         stop = ev.origin_price - buffer
         if entry <= stop:
             return None
-        target = entry + p.rr * (entry - stop)
-        sweep = ev.origin_price < low_arr[max(touch - 60, 0):touch].min() if touch > 0 else False
+        target = ext + p.tp_ext * rng if p.target_mode == "fib_ext" else entry + p.rr * (entry - stop)
+        prior = low_arr[look]
+        sweep = bool(prior.size) and ev.origin_price < prior.min()
     else:
         ext = lo[o:b + 1].min()
         rng = ev.origin_price - ext
         if rng <= 0:
             return None
-        f_lo, f_hi = ext + p.fib_lo * rng, ext + p.fib_hi * rng
-        bot, top = max(f_lo, ev.ob_low), min(f_hi, ev.ob_high)
-        entry = bot if top > bot else (ev.ob_low + ev.ob_high) / 2
+        if p.entry_mode == "fib":
+            entry = ext + p.entry_fib * rng
+        else:
+            f_lo, f_hi = ext + p.fib_lo * rng, ext + p.fib_hi * rng
+            bot, top = max(f_lo, ev.ob_low), min(f_hi, ev.ob_high)
+            entry = bot if top > bot else (ev.ob_low + ev.ob_high) / 2
         stop = ev.origin_price + buffer
         if entry >= stop:
             return None
-        target = entry - p.rr * (stop - entry)
-        sweep = ev.origin_price > high_arr[max(touch - 60, 0):touch].max() if touch > 0 else False
+        target = ext - p.tp_ext * rng if p.target_mode == "fib_ext" else entry - p.rr * (stop - entry)
+        prior = high_arr[look]
+        sweep = bool(prior.size) and ev.origin_price > prior.max()
+    if p.require_sweep and not sweep:
+        return None
     return Order(
         placed=placed,
         expires=placed + pd.Timedelta(minutes=p.order_minutes),
@@ -161,8 +196,12 @@ def _order(ev, d, hi, lo, placed, buffer, p, touch, z, low_arr, high_arr):
         stop=float(stop),
         target=float(target),
         tag="A",
-        meta={"zone_time": z.time, "sweep": bool(sweep)},
+        meta={"zone_time": z.time, "sweep": bool(sweep), "kind": ev.kind},
     )
+
+
+def _ratio(tf: str) -> int:
+    return int(pd.Timedelta(TIMEFRAMES[tf]) / pd.Timedelta(minutes=1))
 
 
 def _np(ts):

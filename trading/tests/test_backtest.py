@@ -213,3 +213,34 @@ def test_sweep_grid_parsing():
     assert len(g) == 8 and g[0] == {"ltf": "M1", "rr": 2.0, "min_cost": 0.0}
     with pytest.raises(SystemExit):
         parse_grid(["nope=1"], smc.SMCParams())
+
+
+# ---------- Cristian preset and compare ----------
+
+def test_cristian_preset_orders_follow_the_fib(walk):
+    inst = get_instrument("EURUSD")
+    p = smc.cristian(require_sweep=False)
+    orders = smc.generate(walk, inst, p)
+    _check_orders(orders, walk)
+    for o in orders:
+        risk, reward = abs(o.entry - o.stop), abs(o.target - o.entry)
+        # entry at 0.705, stop at 1.0, target at -0.5: reward/risk = 1.205 / 0.295
+        assert reward / risk == pytest.approx(1.205 / 0.295, rel=1e-6)
+        assert o.meta["kind"] == "CHoCH"
+
+
+def test_require_sweep_only_keeps_swept_setups(walk):
+    inst = get_instrument("EURUSD")
+    all_ = smc.generate(walk, inst, smc.cristian(require_sweep=False))
+    swept = smc.generate(walk, inst, smc.cristian())
+    assert 0 < len(swept) < len(all_)
+    assert all(o.meta["sweep"] for o in swept)
+
+
+def test_compare_reads_setups(tmp_path):
+    from tradekit.compare import load_setups
+    f = tmp_path / "s.csv"
+    f.write_text("date,time_utc+2,direction,entry,stop\n2026-11-16,08:57,long,52247,52236\n2026-11-20,~08:47,long (counter-trend),48988,48951.5\n")
+    s = load_setups(str(f), 2)
+    assert s.when.iloc[0] == pd.Timestamp("2026-11-16 06:57", tz="UTC")
+    assert list(s.dir) == [1, 1] and s.instrument.iloc[0] == "US30"
