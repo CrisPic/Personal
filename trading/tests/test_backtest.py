@@ -244,3 +244,17 @@ def test_compare_reads_setups(tmp_path):
     s = load_setups(str(f), 2)
     assert s.when.iloc[0] == pd.Timestamp("2026-11-16 06:57", tz="UTC")
     assert list(s.dir) == [1, 1] and s.instrument.iloc[0] == "US30"
+
+
+def test_review_page_has_a_card_per_candidate(walk):
+    from tradekit import review
+    inst = get_instrument("EURUSD")
+    orders = smc.generate(walk, inst, smc.cristian(require_sweep=False))[:3]
+    for o in orders:
+        o.meta["poi_tf"] = "H1"
+    html = review.page("EURUSD", walk, orders)
+    assert html.count('class="card"') == 3 and "Download labels" in html
+    # no candle after the order time is drawn
+    o = orders[0]
+    shown = walk[(walk.index >= o.placed - pd.Timedelta(minutes=120)) & (walk.index < o.placed)]
+    assert review.svg(walk, o).count('class="wick"') == len(shown)

@@ -196,7 +196,8 @@ def _order(ev, d, hi, lo, placed, buffer, p, at, z, low_arr, high_arr):
         stop=float(stop),
         target=float(target),
         tag="A",
-        meta={"zone_time": z.time, "sweep": bool(sweep), "kind": ev.kind},
+        meta={"zone_time": z.time, "zone_low": float(z.ob_low), "zone_high": float(z.ob_high),
+              "sweep": bool(sweep), "kind": ev.kind, "level": float(ev.level), "origin": float(ev.origin_price)},
     )
 
 
