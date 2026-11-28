@@ -1,0 +1,204 @@
+[
+  {
+    "id": "gtv-streaming-services",
+    "title": "Streaming services",
+    "pinToTop": false,
+    "focusGlowEnabled": true,
+    "viewMode": "TABBED_GRID",
+    "showAllTab": false,
+    "folders": [
+      {
+        "id": "gtv-netflix",
+        "title": "Netflix",
+        "tileShape": "LANDSCAPE",
+        "hideTitle": false,
+        "sources": [
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "Netflix Series",
+            "mediaType": "TV",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "8",
+              "voteCountGte": 50
+            }
+          },
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "Netflix Movies",
+            "mediaType": "MOVIE",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "8",
+              "voteCountGte": 50
+            }
+          }
+        ]
+      },
+      {
+        "id": "gtv-prime",
+        "title": "Prime Video",
+        "tileShape": "LANDSCAPE",
+        "hideTitle": false,
+        "sources": [
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "Prime Video Series",
+            "mediaType": "TV",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "119",
+              "voteCountGte": 50
+            }
+          },
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "Prime Video Movies",
+            "mediaType": "MOVIE",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "119",
+              "voteCountGte": 50
+            }
+          }
+        ]
+      },
+      {
+        "id": "gtv-disney",
+        "title": "Disney+",
+        "tileShape": "LANDSCAPE",
+        "hideTitle": false,
+        "sources": [
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "Disney+ Series",
+            "mediaType": "TV",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "337",
+              "voteCountGte": 50
+            }
+          },
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "Disney+ Movies",
+            "mediaType": "MOVIE",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "337",
+              "voteCountGte": 50
+            }
+          }
+        ]
+      },
+      {
+        "id": "gtv-appletv",
+        "title": "Apple TV+",
+        "tileShape": "LANDSCAPE",
+        "hideTitle": false,
+        "sources": [
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "Apple TV+ Series",
+            "mediaType": "TV",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "350",
+              "voteCountGte": 50
+            }
+          },
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "Apple TV+ Movies",
+            "mediaType": "MOVIE",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "350",
+              "voteCountGte": 50
+            }
+          }
+        ]
+      },
+      {
+        "id": "gtv-now",
+        "title": "NOW (Sky)",
+        "tileShape": "LANDSCAPE",
+        "hideTitle": false,
+        "sources": [
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "NOW (Sky) Series",
+            "mediaType": "TV",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "39",
+              "voteCountGte": 50
+            }
+          },
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "NOW (Sky) Movies",
+            "mediaType": "MOVIE",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "39",
+              "voteCountGte": 50
+            }
+          }
+        ]
+      },
+      {
+        "id": "gtv-paramount",
+        "title": "Paramount+",
+        "tileShape": "LANDSCAPE",
+        "hideTitle": false,
+        "sources": [
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "Paramount+ Series",
+            "mediaType": "TV",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "531",
+              "voteCountGte": 50
+            }
+          },
+          {
+            "provider": "tmdb",
+            "tmdbSourceType": "DISCOVER",
+            "title": "Paramount+ Movies",
+            "mediaType": "MOVIE",
+            "sortBy": "popularity.desc",
+            "filters": {
+              "watchRegion": "IT",
+              "withWatchProviders": "531",
+              "voteCountGte": 50
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
