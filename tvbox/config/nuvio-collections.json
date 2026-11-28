@@ -11,7 +11,7 @@
         "id": "gtv-netflix",
         "title": "Netflix",
         "tileShape": "LANDSCAPE",
-        "hideTitle": false,
+        "hideTitle": true,
         "sources": [
           {
             "provider": "tmdb",
@@ -37,13 +37,14 @@
               "voteCountGte": 50
             }
           }
-        ]
+        ],
+        "coverImageUrl": "https://raw.githubusercontent.com/CrisPic/Personal/main/tvbox/config/tiles/netflix.png"
       },
       {
         "id": "gtv-prime",
         "title": "Prime Video",
         "tileShape": "LANDSCAPE",
-        "hideTitle": false,
+        "hideTitle": true,
         "sources": [
           {
             "provider": "tmdb",
@@ -69,13 +70,14 @@
               "voteCountGte": 50
             }
           }
-        ]
+        ],
+        "coverImageUrl": "https://raw.githubusercontent.com/CrisPic/Personal/main/tvbox/config/tiles/prime.png"
       },
       {
         "id": "gtv-disney",
         "title": "Disney+",
         "tileShape": "LANDSCAPE",
-        "hideTitle": false,
+        "hideTitle": true,
         "sources": [
           {
             "provider": "tmdb",
@@ -101,13 +103,14 @@
               "voteCountGte": 50
             }
           }
-        ]
+        ],
+        "coverImageUrl": "https://raw.githubusercontent.com/CrisPic/Personal/main/tvbox/config/tiles/disney.png"
       },
       {
         "id": "gtv-appletv",
         "title": "Apple TV+",
         "tileShape": "LANDSCAPE",
-        "hideTitle": false,
+        "hideTitle": true,
         "sources": [
           {
             "provider": "tmdb",
@@ -133,13 +136,14 @@
               "voteCountGte": 50
             }
           }
-        ]
+        ],
+        "coverImageUrl": "https://raw.githubusercontent.com/CrisPic/Personal/main/tvbox/config/tiles/appletv.png"
       },
       {
         "id": "gtv-now",
         "title": "NOW (Sky)",
         "tileShape": "LANDSCAPE",
-        "hideTitle": false,
+        "hideTitle": true,
         "sources": [
           {
             "provider": "tmdb",
@@ -165,13 +169,14 @@
               "voteCountGte": 50
             }
           }
-        ]
+        ],
+        "coverImageUrl": "https://raw.githubusercontent.com/CrisPic/Personal/main/tvbox/config/tiles/now.png"
       },
       {
         "id": "gtv-paramount",
         "title": "Paramount+",
         "tileShape": "LANDSCAPE",
-        "hideTitle": false,
+        "hideTitle": true,
         "sources": [
           {
             "provider": "tmdb",
@@ -197,7 +202,8 @@
               "voteCountGte": 50
             }
           }
-        ]
+        ],
+        "coverImageUrl": "https://raw.githubusercontent.com/CrisPic/Personal/main/tvbox/config/tiles/paramount.png"
       }
     ]
   }
